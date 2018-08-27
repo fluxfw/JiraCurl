@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.1.4]
+- Adjustment suggestions
+
 ## [0.1.3]
 - Require ilCurlConnection hint
 
