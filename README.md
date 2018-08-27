@@ -16,7 +16,7 @@ git clone git@git.studer-raimann.ch:ILIAS/Plugins/JiraCurl.git JiraCurl
 First add the follow to your `composer.json` file:
 ```json
 "require": {
-  "srag/jiracurl": "^0.1.4"
+  "srag/jiracurl": "^0.1.5"
 },
 ```
 
@@ -36,6 +36,6 @@ Hint: Because of multiple autoloaders of plugins, it could be, that different ve
 
 ### Adjustment suggestions
 * Adjustment suggestions by pull requests on https://git.studer-raimann.ch/ILIAS/Plugins/JiraCurl/tree/develop
-* Adjustment suggestions which are not yet worked out in detail by Jira-Taks under https://jira.studer-raimann.ch/projects/LJIRACURL
+* Adjustment suggestions which are not yet worked out in detail by Jira tasks under https://jira.studer-raimann.ch/projects/LJIRACURL
 * Bug reports under https://jira.studer-raimann.ch/projects/LJIRACURL
 * For external developers please send an email to support-custom1@studer-raimann.ch
