@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.2.1]
+- Add `@author` to classes
+
 ## [0.2.0]
 - PHP7 and PHP7.1 comments
 
