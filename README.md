@@ -25,7 +25,7 @@ If you deliver your plugin, the plugin has it's own copy of this library and the
 Hint: Because of multiple autoloaders of plugins, it could be, that different versions of this library exists and suddenly your plugin use an old version of an other plugin! So you should keep up to date your plugin with `composer update`.
 
 ### Dependencies
-* PHP 7.0
+* PHP >=7.0
 * [composer](https://getcomposer.org)
 * [srag/dic](https://packagist.org/packages/srag/dic)
 
