@@ -174,6 +174,11 @@ class JiraCurl {
 				return NULL;
 			}
 
+			if (isset($result_json["errorMessages"]) || isset($result_json["errors"])) {
+				self::dic()->logger()->root()->log("Jira results errors: errorMessages=" . json_encode($result_json["errorMessages"]) . ", errors="
+					. json_encode($result_json["errors"]), ilLogLevel::ERROR);
+			}
+
 			return $result_json;
 		} catch (Throwable $ex) {
 			self::dic()->logger()->root()->log("Jira exception: " . $ex->getMessage(), ilLogLevel::ERROR);
