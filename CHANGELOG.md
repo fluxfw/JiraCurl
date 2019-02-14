@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.2.7]
+- Log Jira errors
+
 ## [0.2.6]
 - Log Jira errors
 

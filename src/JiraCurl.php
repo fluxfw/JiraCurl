@@ -3,7 +3,6 @@
 namespace srag\JiraCurl;
 
 use CURLFile;
-use Exception;
 use ilCurlConnection;
 use ilCurlConnectionException;
 use ilLogLevel;
@@ -169,13 +168,14 @@ class JiraCurl {
 
 			$result_json = json_decode($result, true);
 			if (!is_array($result_json)) {
+				// Jira
 				self::dic()->logger()->root()->log("Jira results: " . $result, ilLogLevel::ERROR);
 
 				return NULL;
 			}
 
 			return $result_json;
-		} catch (Exception $ex) {
+		} catch (Throwable $ex) {
 			self::dic()->logger()->root()->log("Jira exception: " . $ex->getMessage(), ilLogLevel::ERROR);
 
 			// Curl-Error!
