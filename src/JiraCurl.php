@@ -7,6 +7,8 @@ use ilCurlConnection;
 use ilCurlConnectionException;
 use ilLogLevel;
 use srag\DIC\DICTrait;
+use srag\DIC\Exception\DICException;
+use srag\JiraCurl\Exception\JiraCurlException;
 use Throwable;
 
 /**
@@ -71,6 +73,7 @@ class JiraCurl {
 	 * @param array  $headers
 	 *
 	 * @return ilCurlConnection
+	 *
 	 * @throws ilCurlConnectionException
 	 */
 	protected function initCurlConnection(string $url, array $headers): ilCurlConnection {
@@ -150,6 +153,11 @@ class JiraCurl {
 	 * @param mixed  $post_data
 	 *
 	 * @return array|null
+	 *
+	 * @throws DICException
+	 * @throws ilCurlConnectionException
+	 * @throws JiraCurlException
+	 * @throws Throwable
 	 */
 	protected function doRequest(string $rest_url, array $headers, $post_data = NULL)/*: ?array*/ {
 		$url = $this->jira_domain . $rest_url;
@@ -169,17 +177,19 @@ class JiraCurl {
 			$result_json = json_decode($result, true);
 			if (!is_array($result_json)) {
 				// Jira
-				self::dic()->logger()->root()->log("Jira results: " . $result, ilLogLevel::ERROR);
+				throw new JiraCurlException("Jira results: " . $result);
+			}
 
-				return NULL;
+			if (!empty($result_json["errorMessages"]) || !empty($result_json["errors"])) {
+				throw new JiraCurlException("Jira results errors: errorMessages=" . json_encode($result_json["errorMessages"]) . ", errors="
+					. json_encode($result_json["errors"]));
 			}
 
 			return $result_json;
 		} catch (Throwable $ex) {
 			self::dic()->logger()->root()->log("Jira exception: " . $ex->getMessage(), ilLogLevel::ERROR);
 
-			// Curl-Error!
-			return NULL;
+			throw $ex;
 		} finally {
 			// Close Curl connection
 			if ($curlConnection !== NULL) {
@@ -193,16 +203,19 @@ class JiraCurl {
 	/**
 	 * Create Jira issue ticket
 	 *
-	 * @param string      $jira_project_key
-	 * @param string      $jira_issue_type
-	 * @param string      $summary
-	 * @param string      $description
-	 * @param string|null $fix_version
+	 * @param string $jira_project_key
+	 * @param string $jira_issue_type
+	 * @param string $summary
+	 * @param string $description
 	 *
 	 * @return string|null Issue-Key
+	 *
+	 * @throws DICException
+	 * @throws ilCurlConnectionException
+	 * @throws JiraCurlException
+	 * @throws Throwable
 	 */
-	public function createJiraIssueTicket(string $jira_project_key, string $jira_issue_type, string $summary, string $description,/*: ?*/
-		string $fix_version = NULL)/*: ?string*/ {
+	public function createJiraIssueTicket(string $jira_project_key, string $jira_issue_type, string $summary, string $description)/*: ?string*/ {
 		$headers = [
 			"Accept" => "application/json",
 			"Content-Type" => "application/json"
@@ -225,10 +238,6 @@ class JiraCurl {
 			]
 		];
 
-		if (!empty($fix_version)) {
-			$data ["fields"]["fix_version"] = $fix_version;
-		}
-
 		$result = $this->doRequest("/rest/api/2/issue", $headers, json_encode($data));
 
 		if ($result === NULL || !isset($result["key"])) {
@@ -250,6 +259,11 @@ class JiraCurl {
 	 * @param string $attachement_path
 	 *
 	 * @return bool
+	 *
+	 * @throws DICException
+	 * @throws ilCurlConnectionException
+	 * @throws JiraCurlException
+	 * @throws Throwable
 	 */
 	public function addAttachmentToIssue(string $issue_key, string $attachement_name, string $attachement_mime, string $attachement_path): bool {
 		$headers = [
