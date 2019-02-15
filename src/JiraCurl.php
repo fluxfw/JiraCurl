@@ -5,9 +5,7 @@ namespace srag\JiraCurl;
 use CURLFile;
 use ilCurlConnection;
 use ilCurlConnectionException;
-use ilLogLevel;
 use srag\DIC\DICTrait;
-use srag\DIC\Exception\DICException;
 use srag\JiraCurl\Exception\JiraCurlException;
 use Throwable;
 
@@ -152,14 +150,12 @@ class JiraCurl {
 	 * @param array  $headers
 	 * @param mixed  $post_data
 	 *
-	 * @return array|null
+	 * @return array
 	 *
-	 * @throws DICException
 	 * @throws ilCurlConnectionException
 	 * @throws JiraCurlException
-	 * @throws Throwable
 	 */
-	protected function doRequest(string $rest_url, array $headers, $post_data = NULL)/*: ?array*/ {
+	protected function doRequest(string $rest_url, array $headers, $post_data = NULL): array {
 		$url = $this->jira_domain . $rest_url;
 
 		$curlConnection = NULL;
@@ -175,8 +171,8 @@ class JiraCurl {
 			$result = $curlConnection->exec();
 
 			$result_json = json_decode($result, true);
+
 			if (!is_array($result_json)) {
-				// Jira
 				throw new JiraCurlException("Jira results: " . $result);
 			}
 
@@ -186,10 +182,6 @@ class JiraCurl {
 			}
 
 			return $result_json;
-		} catch (Throwable $ex) {
-			self::dic()->logger()->root()->log("Jira exception: " . $ex->getMessage(), ilLogLevel::ERROR);
-
-			throw $ex;
 		} finally {
 			// Close Curl connection
 			if ($curlConnection !== NULL) {
@@ -208,14 +200,12 @@ class JiraCurl {
 	 * @param string $summary
 	 * @param string $description
 	 *
-	 * @return string|null Issue-Key
+	 * @return string Issue-Key
 	 *
-	 * @throws DICException
 	 * @throws ilCurlConnectionException
 	 * @throws JiraCurlException
-	 * @throws Throwable
 	 */
-	public function createJiraIssueTicket(string $jira_project_key, string $jira_issue_type, string $summary, string $description)/*: ?string*/ {
+	public function createJiraIssueTicket(string $jira_project_key, string $jira_issue_type, string $summary, string $description): string {
 		$headers = [
 			"Accept" => "application/json",
 			"Content-Type" => "application/json"
@@ -240,13 +230,11 @@ class JiraCurl {
 
 		$result = $this->doRequest("/rest/api/2/issue", $headers, json_encode($data));
 
-		if ($result === NULL || !isset($result["key"])) {
-			return NULL;
+		if (empty($result["key"])) {
+			throw new JiraCurlException("Issue key is empty");
 		}
 
-		$issue_key = $result["key"];
-
-		return $issue_key;
+		return $result["key"];
 	}
 
 
@@ -258,14 +246,10 @@ class JiraCurl {
 	 * @param string $attachement_mime
 	 * @param string $attachement_path
 	 *
-	 * @return bool
-	 *
-	 * @throws DICException
 	 * @throws ilCurlConnectionException
 	 * @throws JiraCurlException
-	 * @throws Throwable
 	 */
-	public function addAttachmentToIssue(string $issue_key, string $attachement_name, string $attachement_mime, string $attachement_path): bool {
+	public function addAttachmentToIssue(string $issue_key, string $attachement_name, string $attachement_mime, string $attachement_path)/*: void*/ {
 		$headers = [
 			"Accept" => "application/json",
 			"X-Atlassian-Token" => "nocheck"
@@ -275,9 +259,7 @@ class JiraCurl {
 			"file" => new CURLFile($attachement_path, $attachement_mime, $attachement_name)
 		];
 
-		$result = $this->doRequest("/rest/api/2/issue/" . $issue_key . "/attachments", $headers, $data);
-
-		return ($result !== NULL);
+		$this->doRequest("/rest/api/2/issue/" . $issue_key . "/attachments", $headers, $data);
 	}
 
 
