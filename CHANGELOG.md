@@ -3,9 +3,6 @@
 ## [0.2.9]
 - Log Jira errors
 
-## [0.2.9]
-- Log Jira errors
-
 ## [0.2.8]
 - Supports fix_version
 
