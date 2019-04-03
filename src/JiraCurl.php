@@ -200,21 +200,21 @@ class JiraCurl {
 	/**
 	 * Get Jira tickets of project
 	 *
-	 * @param string $jira_project_key
-	 * @param array  $issue_types Filter by issue types
+	 * @param string $jira_project_key Project key
+	 * @param array  $filter_issue_types Filter by issue types
 	 *
 	 * @return stdClass[] Array of jira tickets
 	 *
 	 * @throws ilCurlConnectionException
 	 * @throws JiraCurlException
 	 */
-	public function getTicketsOfProject(string $jira_project_key, array $issue_types = []): array {
+	public function getTicketsOfProject(string $jira_project_key, array $filter_issue_types = []): array {
 		$headers = [
 			"Accept" => "application/json"
 		];
 
 		// Tickets of project
-		$jql = 'project="' . addslashes($jira_project_key) . '"';
+		$jql = 'project=' . $this->escapeJQLValue($jira_project_key);
 
 		// Resolution is unresolved
 		$jql .= " AND resolution=unresolved";
@@ -223,10 +223,8 @@ class JiraCurl {
 		$jql .= " AND level IS EMPTY";
 
 		// Filter by issue types
-		if (!empty($issue_types)) {
-			$jql .= " AND issuetype IN(" . implode(",", array_map(function (string $issue_type): string {
-					return '"' . addslashes($issue_type) . '"';
-				}, $issue_types)) . ")";
+		if (!empty($filter_issue_types)) {
+			$jql .= " AND issuetype IN(" . implode(",", array_map([ $this, "escapeJQLValue" ], $filter_issue_types)) . ")";
 		}
 
 		// Sort by updated descending
@@ -239,6 +237,17 @@ class JiraCurl {
 		}
 
 		return $result["issues"];
+	}
+
+
+	/**
+	 * @param string $value
+	 *
+	 * @return string
+	 */
+	public function escapeJQLValue(string $value): string {
+		// https://github.com/lesstif/php-jira-rest-client/blob/e2cd96af7def5c6fe1250d1c6ea3c30b1929ea1c/src/Issue/JqlQuery.php#L455
+		return '"' . str_replace('"', '\\\\"', $value) . '"';
 	}
 
 
