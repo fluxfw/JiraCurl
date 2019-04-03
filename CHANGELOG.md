@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.4.1]
+- Correct jql value escape " with \\
+
 ## [0.4.0]
 - Get tickets of Jira project
 
