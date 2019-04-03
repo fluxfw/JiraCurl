@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.4.0]
+- Get tickets of Jira project
+
 ## [0.3.0]
 - Supports priority
 

@@ -7,6 +7,7 @@ use ilCurlConnection;
 use ilCurlConnectionException;
 use srag\DIC\DICTrait;
 use srag\JiraCurl\Exception\JiraCurlException;
+use stdClass;
 use Throwable;
 
 /**
@@ -27,6 +28,10 @@ class JiraCurl {
 	 * @var string
 	 */
 	const AUTHORIZATION_OAUTH = "oauth";
+	/**
+	 * @var int
+	 */
+	const MAX_RESULTS = 1000;
 	/**
 	 * @var string
 	 */
@@ -189,6 +194,51 @@ class JiraCurl {
 				$curlConnection = null;
 			}
 		}
+	}
+
+
+	/**
+	 * Get Jira tickets of project
+	 *
+	 * @param string $jira_project_key
+	 * @param array  $issue_types Filter by issue types
+	 *
+	 * @return stdClass[] Array of jira tickets
+	 *
+	 * @throws ilCurlConnectionException
+	 * @throws JiraCurlException
+	 */
+	public function getTicketsOfProject(string $jira_project_key, array $issue_types = []): array {
+		$headers = [
+			"Accept" => "application/json"
+		];
+
+		// Tickets of project
+		$jql = 'project="' . addslashes($jira_project_key) . '"';
+
+		// Resolution is unresolved
+		$jql .= " AND resolution=unresolved";
+
+		// No security level set
+		$jql .= " AND level IS EMPTY";
+
+		// Filter by issue types
+		if (!empty($issue_types)) {
+			$jql .= " AND issuetype IN(" . implode(",", array_map(function (string $issue_type): string {
+					return '"' . addslashes($issue_type) . '"';
+				}, $issue_types)) . ")";
+		}
+
+		// Sort by updated descending
+		$jql .= " ORDER BY updated DESC";
+
+		$result = $this->doRequest("/rest/api/2/search?maxResults=" . rawurlencode(self::MAX_RESULTS) . "&jql=" . rawurlencode($jql), $headers);
+
+		if (!is_array($result["issues"])) {
+			throw new JiraCurlException("Issues array is not set");
+		}
+
+		return $result["issues"];
 	}
 
 
