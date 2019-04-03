@@ -200,7 +200,7 @@ class JiraCurl {
 	/**
 	 * Get Jira tickets of project
 	 *
-	 * @param string $jira_project_key Project key
+	 * @param string $jira_project_key   Project key
 	 * @param array  $filter_issue_types Filter by issue types
 	 *
 	 * @return stdClass[] Array of jira tickets
@@ -246,8 +246,7 @@ class JiraCurl {
 	 * @return string
 	 */
 	public function escapeJQLValue(string $value): string {
-		// https://github.com/lesstif/php-jira-rest-client/blob/e2cd96af7def5c6fe1250d1c6ea3c30b1929ea1c/src/Issue/JqlQuery.php#L455
-		return '"' . str_replace('"', '\\\\"', $value) . '"';
+		return '"' . addslashes($value) . '"';
 	}
 
 
