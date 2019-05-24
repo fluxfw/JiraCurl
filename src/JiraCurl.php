@@ -267,7 +267,7 @@ class JiraCurl {
 	 *
 	 * @return string
 	 */
-	protected function escapeJQLValue(string $value): string {
+	public function escapeJQLValue(string $value): string {
 		return '"' . addslashes($value) . '"';
 	}
 
