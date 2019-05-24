@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.5.1]
+- Make `escapeJQLValue` public
+
 ## [0.5.0]
 - getTicketsByJQL
 
