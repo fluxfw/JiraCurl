@@ -197,6 +197,39 @@ class JiraCurl {
 
 
 	/**
+	 * Get Jira tickets by JQL filter
+	 *
+	 * @param string $jql JQL
+	 *
+	 * @return array Array of jira tickets
+	 *
+	 * @throws ilCurlConnectionException
+	 * @throws JiraCurlException
+	 */
+	public function getTicketsByJQL(string $jql): array {
+		$headers = [
+			"Accept" => "application/json"
+		];
+
+		$result = $this->doRequest("/rest/api/2/search?maxResults=" . rawurlencode(self::MAX_RESULTS) . "&jql=" . rawurlencode($jql), $headers);
+
+		if (!is_array($result["issues"])) {
+			throw new JiraCurlException("Issues array is not set");
+		}
+
+		$issues = $result["issues"];
+
+		foreach ($issues as $issue) {
+			if (!is_array($issue)) {
+				throw new JiraCurlException("Issue is not an array");
+			}
+		}
+
+		return $issues;
+	}
+
+
+	/**
 	 * Get Jira tickets of project
 	 *
 	 * @param string $jira_project_key   Project key
@@ -208,10 +241,6 @@ class JiraCurl {
 	 * @throws JiraCurlException
 	 */
 	public function getTicketsOfProject(string $jira_project_key, array $filter_issue_types = []): array {
-		$headers = [
-			"Accept" => "application/json"
-		];
-
 		// Tickets of project
 		$jql = 'project=' . $this->escapeJQLValue($jira_project_key);
 
@@ -229,21 +258,7 @@ class JiraCurl {
 		// Sort by updated descending
 		$jql .= " ORDER BY updated DESC";
 
-		$result = $this->doRequest("/rest/api/2/search?maxResults=" . rawurlencode(self::MAX_RESULTS) . "&jql=" . rawurlencode($jql), $headers);
-
-		if (!is_array($result["issues"])) {
-			throw new JiraCurlException("Issues array is not set");
-		}
-
-		$issues = $result["issues"];
-
-		foreach ($issues as $issue) {
-			if (!is_array($issue)) {
-				throw new JiraCurlException("Issue is not an array");
-			}
-		}
-
-		return $issues;
+		return $this->getTicketsByJQL($jql);
 	}
 
 
