@@ -5,6 +5,7 @@ namespace srag\JiraCurl;
 use CURLFile;
 use ilCurlConnection;
 use ilCurlConnectionException;
+use ilProxySettings;
 use srag\DIC\DICTrait;
 use srag\JiraCurl\Exception\JiraCurlException;
 use Throwable;
@@ -82,6 +83,22 @@ class JiraCurl {
 		$curlConnection = new ilCurlConnection();
 
 		$curlConnection->init();
+
+		// use a proxy, if configured by ILIAS
+		if (!self::version()->is60()) {
+			$proxy = ilProxySettings::_getInstance();
+			if ($proxy->isActive()) {
+				$curlConnection->setOpt(CURLOPT_HTTPPROXYTUNNEL, true);
+
+				if (!empty($proxy->getHost())) {
+					$curlConnection->setOpt(CURLOPT_PROXY, $proxy->getHost());
+				}
+
+				if (!empty($proxy->getPort())) {
+					$curlConnection->setOpt(CURLOPT_PROXYPORT, $proxy->getPort());
+				}
+			}
+		}
 
 		$curlConnection->setOpt(CURLOPT_RETURNTRANSFER, true);
 		$curlConnection->setOpt(CURLOPT_VERBOSE, false);
