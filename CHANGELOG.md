@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.7.0]
+- Add attachments to service desk request
+
 ## [0.6.0]
 - Create service desk request
 - Link tickets
