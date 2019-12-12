@@ -386,6 +386,86 @@ class JiraCurl
 
 
     /**
+     * Create service desk request
+     *
+     * @param int    $service_desk_id
+     * @param int    $request_type_id
+     * @param string $summary
+     * @param string $description
+     * @param string $customer_email
+     *
+     * @return string
+     *
+     * @throws ilCurlConnectionException
+     * @throws JiraCurlException
+     */
+    public function createServiceDeskRequest(int $service_desk_id, int $request_type_id, string $summary, string $description, string $customer_email) : string
+    {
+        $headers = [
+            "Accept"       => "application/json",
+            "Content-Type" => "application/json"
+        ];
+
+        $data = [
+            "serviceDeskId"      => $service_desk_id,
+            "requestTypeId"      => $request_type_id,
+            "requestFieldValues" => [
+                "summary"     => $summary,
+                "description" => $description
+            ],
+            "raiseOnBehalfOf"    => $customer_email
+        ];
+
+        $result = $this->doRequest("/rest/servicedeskapi/request", $headers, json_encode($data));
+
+        if (empty($result["issueKey"])) {
+            throw new JiraCurlException("Issue key is empty");
+        }
+
+        return $result["issueKey"];
+    }
+
+
+    /**
+     * Link tickets
+     *
+     * @param string $ticket_key_1
+     * @param string $ticket_key_2
+     * @param string $link_type
+     *
+     * @throws ilCurlConnectionException
+     * @throws JiraCurlException
+     */
+    public function linkTickets(string $ticket_key_1, string $ticket_key_2, string $link_type)/*: void*/
+    {
+        $headers = [
+            "Accept"       => "application/json",
+            "Content-Type" => "application/json"
+        ];
+
+        $data = [
+            "inwardIssue"  => [
+                "key" => $ticket_key_1
+            ],
+            "outwardIssue" => [
+                "key" => $ticket_key_2
+            ],
+            "type"         => [
+                "name" => $link_type
+            ]
+        ];
+
+        try {
+            $this->doRequest("/rest/api/2/issueLink", $headers, json_encode($data));
+        } catch (JiraCurlException $ex) {
+            if ($ex->getMessage() !== "Jira results: ") {
+                throw $ex;
+            }
+        }
+    }
+
+
+    /**
      * @return string
      */
     public function getJiraDomain() : string
