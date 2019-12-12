@@ -5,6 +5,7 @@ namespace srag\JiraCurl;
 use CURLFile;
 use ilCurlConnection;
 use ilCurlConnectionException;
+use ILIAS\FileUpload\DTO\UploadResult;
 use ilProxySettings;
 use srag\DIC\DICTrait;
 use srag\JiraCurl\Exception\JiraCurlException;
@@ -197,13 +198,16 @@ class JiraCurl
 
             $result_json = json_decode($result, true);
 
-            if (!is_array($result_json)) {
+            if (empty($result_json) || !is_array($result_json)) {
                 throw new JiraCurlException("Jira results: " . $result);
             }
 
-            if (!empty($result_json["errorMessages"]) || !empty($result_json["errors"])) {
-                throw new JiraCurlException("Jira results errors: errorMessages=" . json_encode($result_json["errorMessages"]) . ", errors="
-                    . json_encode($result_json["errors"]));
+            if (!empty($result_json["errorMessage"]) || !empty($result_json["errorMessages"]) || !empty($result_json["errors"])) {
+                throw new JiraCurlException("Jira results errors: " . json_encode($result_json));
+            }
+
+            if (!empty($result_json["status-code"]) && intval($result_json["status-code"]) >= 400) {
+                throw new JiraCurlException("Jira results errors: " . json_encode($result_json));
             }
 
             return $result_json;
@@ -235,7 +239,7 @@ class JiraCurl
 
         $result = $this->doRequest("/rest/api/2/search?maxResults=" . rawurlencode(self::MAX_RESULTS) . "&jql=" . rawurlencode($jql), $headers);
 
-        if (!is_array($result["issues"])) {
+        if (empty($result["issues"]) || !is_array($result["issues"])) {
             throw new JiraCurlException("Issues array is not set");
         }
 
@@ -360,28 +364,40 @@ class JiraCurl
 
 
     /**
-     * Add attachement to issue ticket
+     * Add attachements to issue ticket
      *
-     * @param string $issue_key
-     * @param string $attachement_name
-     * @param string $attachement_mime
-     * @param string $attachement_path
+     * @param string         $issue_key
+     * @param UploadResult[] $attachments
      *
      * @throws ilCurlConnectionException
      * @throws JiraCurlException
      */
-    public function addAttachmentToIssue(string $issue_key, string $attachement_name, string $attachement_mime, string $attachement_path)/*: void*/
+    public function addAttachmentsToIssue(string $issue_key, array $attachments)/*: void*/
     {
+        if (empty($attachments)) {
+            return;
+        }
+
         $headers = [
             "Accept"            => "application/json",
+            "Content-Type"      => "multipart/form-data",
             "X-Atlassian-Token" => "nocheck"
         ];
 
-        $data = [
-            "file" => new CURLFile($attachement_path, $attachement_mime, $attachement_name)
-        ];
+        /*
+        $data = [];
+        foreach ($attachments as $i => $attachment) {
+            $data ["file[" . $i . "]"] = new CURLFile($attachment->getPath(), $attachment->getMimeType(), $attachment->getName());
+        }
+        */
 
-        $this->doRequest("/rest/api/2/issue/" . $issue_key . "/attachments", $headers, $data);
+        foreach ($attachments as $i => $attachment) {
+            $data = [
+                "file" => new CURLFile($attachment->getPath(), $attachment->getMimeType(), $attachment->getName())
+            ];
+
+            $this->doRequest("/rest/api/2/issue/" . $issue_key . "/attachments", $headers, $data);
+        }
     }
 
 
@@ -423,6 +439,68 @@ class JiraCurl
         }
 
         return $result["issueKey"];
+    }
+
+
+    /**
+     * Add attachments to service desk request
+     *
+     * @param int            $service_desk_id
+     * @param string         $request_ticket_key
+     * @param UploadResult[] $attachments
+     *
+     * @throws ilCurlConnectionException
+     * @throws JiraCurlException
+     */
+    public function addAttachmentsToServiceDeskRequest(int $service_desk_id, string $request_ticket_key, array $attachments)/*:void*/
+    {
+        if (empty($attachments)) {
+            return;
+        }
+
+        $headers = [
+            "Accept"            => "application/json",
+            "Content-Type"      => "multipart/form-data",
+            "X-Atlassian-Token" => "nocheck",
+            "X-ExperimentalApi" => "opt-in"
+        ];
+
+        /*
+        $data = [];
+        foreach ($attachments as $i => $attachment) {
+            $data ["file[" . $i . "]"] = new CURLFile($attachment->getPath(), $attachment->getMimeType(), $attachment->getName());
+        }
+        */
+
+        $temporary_attachment_ids = [];
+
+        foreach ($attachments as $attachment) {
+            $data = [
+                "file" => new CURLFile($attachment->getPath(), $attachment->getMimeType(), $attachment->getName())
+            ];
+
+            $result = $this->doRequest("/rest/servicedeskapi/servicedesk/" . $service_desk_id . "/attachTemporaryFile", $headers, $data);
+            if (empty($result["temporaryAttachments"]) || !is_array($result["temporaryAttachments"])) {
+                throw new JiraCurlException("Temporary attachments is empty");
+            }
+
+            $temporary_attachment_ids = array_merge($temporary_attachment_ids, array_map(function (array $temporary_attachment) : string {
+                return $temporary_attachment["temporaryAttachmentId"];
+            }, $result["temporaryAttachments"]));
+        }
+
+        $headers = [
+            "Accept"            => "application/json",
+            "Content-Type"      => "application/json",
+            "X-ExperimentalApi" => "opt-in"
+        ];
+
+        $data = [
+            "temporaryAttachmentIds" => $temporary_attachment_ids,
+            "public"                 => true
+        ];
+
+        $this->doRequest("/rest/servicedeskapi/request/" . $request_ticket_key . "/attachment", $headers, json_encode($data));
     }
 
 
