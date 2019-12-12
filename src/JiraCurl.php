@@ -544,6 +544,48 @@ class JiraCurl
 
 
     /**
+     * Create service desk customer
+     *
+     * @param string $email
+     * @param string $full_name
+     *
+     * @return string
+     *
+     * @throws ilCurlConnectionException
+     * @throws JiraCurlException
+     */
+    public function createServiceDeskCustomer(string $email, string $full_name) : string
+    {
+        $headers = [
+            "Accept"            => "application/json",
+            "Content-Type"      => "application/json",
+            "X-ExperimentalApi" => "opt-in"
+        ];
+
+        $data = [
+            "email"    => $email,
+            "fullName" => $full_name
+        ];
+
+        try {
+            $result = $this->doRequest("/rest/servicedeskapi/customer", $headers, json_encode($data));
+        } catch (JiraCurlException $ex) {
+            if (strpos($ex->getMessage(), "A user with that username already exists") !== false) {
+                return $email;
+            } else {
+                throw $ex;
+            }
+        }
+
+        if (empty($result["name"])) {
+            throw new JiraCurlException("Name is empty");
+        }
+
+        return $result["name"];
+    }
+
+
+    /**
      * @return string
      */
     public function getJiraDomain() : string
