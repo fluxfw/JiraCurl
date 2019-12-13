@@ -450,14 +450,14 @@ class JiraCurl
      * @param int         $request_type_id
      * @param string      $summary
      * @param string      $description
-     * @param string|null $customer_email
+     * @param string|null $customer
      *
      * @return string
      *
      * @throws ilCurlConnectionException
      * @throws JiraCurlException
      */
-    public function createServiceDeskRequest(int $service_desk_id, int $request_type_id, string $summary, string $description, /*?*/ string $customer_email = null) : string
+    public function createServiceDeskRequest(int $service_desk_id, int $request_type_id, string $summary, string $description, /*?*/ string $customer = null) : string
     {
         $headers = [
             "Accept"       => "application/json",
@@ -472,8 +472,8 @@ class JiraCurl
                 "description" => $description
             ]
         ];
-        if (!empty($customer_email)) {
-            $data["raiseOnBehalfOf"] = $customer_email;
+        if (!empty($customer)) {
+            $data["raiseOnBehalfOf"] = $customer;
         }
 
         $result = $this->doRequest("/rest/servicedeskapi/request", $headers, json_encode($data));
