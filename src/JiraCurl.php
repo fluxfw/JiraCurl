@@ -22,6 +22,7 @@ class JiraCurl
 {
 
     use DICTrait;
+
     /**
      * @var string
      */
