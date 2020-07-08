@@ -699,7 +699,6 @@ class JiraCurl
 
         $curlConnection->init();
 
-        // use a proxy, if configured by ILIAS
         if (!self::version()->is6()) {
             $proxy = ilProxySettings::_getInstance();
             if ($proxy->isActive()) {
