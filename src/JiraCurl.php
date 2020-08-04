@@ -106,7 +106,7 @@ class JiraCurl
                 "file" => new CURLFile($attachment->getPath(), $attachment->getMimeType(), $attachment->getName())
             ];
 
-            $this->doRequest("/rest/api/2/issue/" . $issue_key . "/attachments", $headers, json_encode($post_data));
+            $this->doRequest("rest/api/2/issue/" . $issue_key . "/attachments", $headers, json_encode($post_data));
         }
     }
 
@@ -234,7 +234,7 @@ class JiraCurl
         $post_data = [
             "fields" => [
                 "project" => [
-                    "key" => $jira_project_key,
+                    "key" => $jira_project_key
                 ],
 
                 "summary" => $summary,
@@ -618,6 +618,36 @@ class JiraCurl
 
         try {
             $this->doRequest($rest_url, $headers, json_encode($post_data));
+        } catch (JiraCurlException $ex) {
+            if ($ex->getMessage() !== "Jira results: ") {
+                throw $ex;
+            }
+        }
+    }
+
+
+    /**
+     * @param string $issue_key
+     * @param array  $fields
+     *
+     * @throws ilCurlConnectionException
+     * @throws JiraCurlException
+     */
+    public function updateIssue(string $issue_key, array $fields) : void
+    {
+        $rest_url = "rest/api/2/issue/" . $issue_key;
+
+        $headers = [
+            "Accept"       => "application/json",
+            "Content-Type" => "application/json"
+        ];
+
+        $put_data = [
+            "fields" => $fields
+        ];
+
+        try {
+            $this->doRequest($rest_url, $headers, null, json_encode($put_data));
         } catch (JiraCurlException $ex) {
             if ($ex->getMessage() !== "Jira results: ") {
                 throw $ex;
