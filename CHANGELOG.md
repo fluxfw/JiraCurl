@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.11.0]
+- Generate readme
+
 ## [0.10.1]
 - Fix
 
