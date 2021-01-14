@@ -11,9 +11,9 @@
   },
   "type": "library",
   "keywords": [
-    "ILIAS",
-    "Jira",
-    "Curl"
+    "curl",
+    "ilias",
+    "jira"
   ],
   "homepage": "https://github.com/studer-raimann/JiraCurl",
   "license": "GPL-3.0-only",
